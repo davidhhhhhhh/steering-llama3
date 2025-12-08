@@ -12,12 +12,14 @@ def print_memory_usage():
     
     # GPU memory  
     if torch.cuda.is_available():
-        print(f"GPU: {torch.cuda.memory_allocated()/1e9:.1f}GB allocated")
+        for i in range(torch.cuda.device_count()):
+            print(f"GPU {i}: {torch.cuda.memory_allocated(i)/1e9:.1f}GB allocated / {torch.cuda.get_device_properties(i).total_memory/1e9:.1f}GB total")
 
 def main():
-    model_id = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+    model_id = "meta-llama/Meta-Llama-3.1-70B-Instruct"
     cache_dir = os.path.expanduser("~/hf-cache")
     
+    print(f"Available GPUs: {torch.cuda.device_count()}")
     print("=== Before loading ===")
     print_memory_usage()
     
@@ -39,8 +41,8 @@ def main():
         model_id,
         cache_dir=cache_dir,
         local_files_only=True,
-        torch_dtype=torch.bfloat16,  # Fixed: was 'dtype'
-        device_map="cuda"
+        torch_dtype=torch.bfloat16,
+        device_map="auto"  # Changed from "cuda" to "auto"
     )
     load_time = time.time() - start_time
     print(f"Model loaded in {load_time:.2f}s")
