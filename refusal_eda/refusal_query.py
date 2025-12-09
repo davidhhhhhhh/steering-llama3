@@ -16,7 +16,7 @@ def print_memory_usage():
         print(f"GPU: {torch.cuda.memory_allocated()/1e9:.1f}GB allocated")
 
 def main():
-    model_id = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+    model_id = "meta-llama/Meta-Llama-3-70B"
     cache_dir = os.path.expanduser("~/hf-cache")
     
     # Load and prepare data
@@ -50,7 +50,7 @@ def main():
         cache_dir=cache_dir,
         local_files_only=True,
         torch_dtype=torch.bfloat16,
-        device_map="cuda"
+        device_map="auto"
     )
     load_time = time.time() - start_time
     print(f"Model loaded in {load_time:.2f}s")
