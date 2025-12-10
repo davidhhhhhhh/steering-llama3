@@ -1,0 +1,38 @@
+2025-12-10 05:54:13 - INFO - Loading data...
+2025-12-10 05:54:14 - INFO - Loaded 25287 rows
+2025-12-10 05:54:14 - INFO - === Before loading ===
+2025-12-10 05:54:14 - INFO - RAM: 16.5GB used / 404.3GB total
+2025-12-10 05:54:14 - INFO - GPU 0: 0.0GB allocated
+2025-12-10 05:54:14 - INFO - GPU 1: 0.0GB allocated
+2025-12-10 05:54:14 - INFO - GPU 2: 0.0GB allocated
+2025-12-10 05:54:14 - INFO - GPU 3: 0.0GB allocated
+2025-12-10 05:54:14 - INFO - Loading tokenizer from local cache …
+2025-12-10 05:54:15 - INFO - Set pad_token to eos_token: <|end_of_text|>
+2025-12-10 05:54:15 - INFO - Tokenizer loaded in 0.36s
+2025-12-10 05:54:15 - INFO - === After tokenizer ===
+2025-12-10 05:54:15 - INFO - RAM: 16.8GB used / 404.3GB total
+2025-12-10 05:54:15 - INFO - GPU 0: 0.0GB allocated
+2025-12-10 05:54:15 - INFO - GPU 1: 0.0GB allocated
+2025-12-10 05:54:15 - INFO - GPU 2: 0.0GB allocated
+2025-12-10 05:54:15 - INFO - GPU 3: 0.0GB allocated
+2025-12-10 05:54:15 - INFO - Loading model from local cache …
+2025-12-10 05:54:53 - INFO - Model loaded in 38.32s
+2025-12-10 05:54:53 - INFO - === After model loading ===
+2025-12-10 05:54:53 - INFO - RAM: 17.2GB used / 404.3GB total
+2025-12-10 05:54:53 - INFO - GPU 0: 34.6GB allocated
+2025-12-10 05:54:53 - INFO - GPU 1: 35.9GB allocated
+2025-12-10 05:54:53 - INFO - GPU 2: 35.9GB allocated
+2025-12-10 05:54:53 - INFO - GPU 3: 34.6GB allocated
+2025-12-10 05:54:53 - INFO - Processing 25287 prompts with batch_size=4...
+2025-12-10 07:07:33 - INFO - Processed 100/25287 rows (new: 100, skipped: 0)
+2025-12-10 07:21:52 - INFO - Processed 200/25287 rows (new: 200, skipped: 0)
+2025-12-10 07:54:07 - INFO - Processed 300/25287 rows (new: 300, skipped: 0)
+2025-12-10 08:46:51 - INFO - Processed 400/25287 rows (new: 400, skipped: 0)
+2025-12-10 10:07:26 - INFO - Checkpoint saved to refusal_eda/meta-llama_Meta-Llama-3-70B_outputs_20251210_055413.csv
+2025-12-10 10:07:26 - INFO - Processed 500/25287 rows (new: 500, skipped: 0)
+2025-12-10 11:09:16 - INFO - Processed 600/25287 rows (new: 600, skipped: 0)
+2025-12-10 11:34:20 - INFO - Processed 700/25287 rows (new: 700, skipped: 0)
+2025-12-10 12:33:23 - INFO - Processed 800/25287 rows (new: 800, skipped: 0)
+2025-12-10 13:50:37 - INFO - Processed 900/25287 rows (new: 900, skipped: 0)
+2025-12-10 15:03:02 - INFO - Checkpoint saved to refusal_eda/meta-llama_Meta-Llama-3-70B_outputs_20251210_055413.csv
+2025-12-10 15:03:02 - INFO - Processed 1000/25287 rows (new: 1000, skipped: 0)

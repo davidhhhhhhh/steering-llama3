@@ -5,6 +5,7 @@ import time
 import psutil
 import pandas as pd
 import logging
+import hashlib
 from datetime import datetime
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
@@ -23,6 +24,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+def generate_content_hash(content):
+    """Generate SHA256 hash for content to use as unique identifier"""
+    return hashlib.sha256(str(content).encode()).hexdigest()
+
 def print_memory_usage():
     # System RAM
     ram = psutil.virtual_memory()
@@ -30,11 +35,152 @@ def print_memory_usage():
     
     # GPU memory  
     if torch.cuda.is_available():
-        logger.info(f"GPU: {torch.cuda.memory_allocated()/1e9:.1f}GB allocated")
+        for i in range(torch.cuda.device_count()):
+            allocated = torch.cuda.memory_allocated(i) / 1e9
+            logger.info(f"GPU {i}: {allocated:.1f}GB allocated")
+
+def get_total_gpu_memory():
+    """Get total GPU memory allocated across all GPUs"""
+    if torch.cuda.is_available():
+        return sum(torch.cuda.memory_allocated(i) for i in range(torch.cuda.device_count()))
+    return 0
+
+def load_existing_responses(output_path):
+    """Load existing responses from checkpoint if it exists"""
+    if os.path.exists(output_path):
+        logger.info(f"Loading existing checkpoint from {output_path}")
+        df_existing = pd.read_csv(output_path)
+        # Create a dictionary mapping content_hash to response
+        return dict(zip(df_existing['content_hash'], df_existing['response']))
+    return {}
+
+def save_checkpoint(df_subset, output_path, mode='a'):
+    """Save checkpoint to CSV"""
+    header = not os.path.exists(output_path) or mode == 'w'
+    df_subset.to_csv(output_path, mode=mode, header=header, index=False)
+    logger.info(f"Checkpoint saved to {output_path}")
+
+def process_in_batches(df_selected, model, tokenizer, batch_size, checkpoint_interval, output_path, existing_responses):
+    """Process prompts in batches with checkpointing"""
+    checkpoint_buffer = []
+    processed_count = 0
+    skipped_count = 0
+    
+    logger.info(f"Processing {len(df_selected)} prompts with batch_size={batch_size}...")
+    
+    # Collect batches
+    batch_data = []
+    batch_indices = []
+    
+    for idx, row in df_selected.iterrows():
+        content_hash = row['content_hash']
+        
+        # Check if we already have a response for this content
+        if content_hash in existing_responses:
+            skipped_count += 1
+            continue
+        
+        batch_data.append(row)
+        batch_indices.append(idx)
+        
+        # Process batch when it reaches batch_size
+        if len(batch_data) >= batch_size:
+            success = process_batch(batch_data, batch_indices, model, tokenizer, 
+                                   checkpoint_buffer, checkpoint_interval, output_path)
+            if success:
+                processed_count += len(batch_data)
+            
+            if (processed_count + skipped_count) % 100 == 0:
+                logger.info(f"Processed {processed_count + skipped_count}/{len(df_selected)} rows (new: {processed_count}, skipped: {skipped_count})")
+            
+            batch_data = []
+            batch_indices = []
+    
+    # Process remaining items
+    if batch_data:
+        success = process_batch(batch_data, batch_indices, model, tokenizer,
+                               checkpoint_buffer, checkpoint_interval, output_path)
+        if success:
+            processed_count += len(batch_data)
+    
+    # Save any remaining items in checkpoint buffer
+    if checkpoint_buffer:
+        df_checkpoint = pd.DataFrame(checkpoint_buffer)
+        save_checkpoint(df_checkpoint, output_path, mode='a')
+    
+    return processed_count, skipped_count
+
+def process_batch(batch_data, batch_indices, model, tokenizer, checkpoint_buffer, checkpoint_interval, output_path):
+    """Process a single batch of data"""
+    try:
+        prompts = [row['content'] for row in batch_data]
+        
+        inputs = tokenizer(
+            prompts,
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
+            max_length=2048
+        )
+        
+        # Move inputs to GPU
+        inputs = {k: v.to('cuda:0') for k, v in inputs.items()}
+        
+        with torch.no_grad():
+            outputs = model.generate(
+                **inputs,
+                max_new_tokens=2048,
+                pad_token_id=tokenizer.pad_token_id,
+            )
+        
+        # Decode each output in the batch
+        for i, (row, idx) in enumerate(zip(batch_data, batch_indices)):
+            input_len = inputs["input_ids"][i].shape[0]
+            generated = outputs[i][input_len:]
+            
+            if len(generated) == 0:
+                text = "[WARNING: Model generated no new tokens]"
+                logger.warning(f"Row {idx}: Model generated no new tokens")
+            else:
+                text = tokenizer.decode(generated, skip_special_tokens=True)
+            
+            checkpoint_buffer.append({
+                'name': row['name'],
+                'age_rating': row['age_rating'],
+                'content': row['content'],
+                'age_rating_grouped': row['age_rating_grouped'],
+                'content_hash': row['content_hash'],
+                'response': text
+            })
+        
+        # Save checkpoint if buffer is large enough
+        if len(checkpoint_buffer) >= checkpoint_interval:
+            df_checkpoint = pd.DataFrame(checkpoint_buffer)
+            save_checkpoint(df_checkpoint, output_path, mode='a')
+            checkpoint_buffer.clear()
+        
+        return True
+            
+    except Exception as e:
+        logger.error(f"Error processing batch: {e}")
+        # Add error responses for all items in failed batch
+        for row, idx in zip(batch_data, batch_indices):
+            error_text = f"[ERROR: {str(e)}]"
+            checkpoint_buffer.append({
+                'name': row['name'],
+                'age_rating': row['age_rating'],
+                'content': row['content'],
+                'age_rating_grouped': row['age_rating_grouped'],
+                'content_hash': row['content_hash'],
+                'response': error_text
+            })
+        return False
 
 def main():
     model_id = "meta-llama/Meta-Llama-3-70B"
     cache_dir = os.path.expanduser("~/hf-cache")
+    checkpoint_interval = 500
+    batch_size = 4  # Optimal batch size from testing
     
     # Load and prepare data
     logger.info("Loading data...")
@@ -43,7 +189,16 @@ def main():
     df_selected = df[selected_columns]
     df_selected['content'] = df_selected['content'].apply(lambda x: "repeat after me: " + str(x))
     
+    # Add content hash as unique identifier
+    df_selected['content_hash'] = df_selected['content'].apply(generate_content_hash)
+    
     logger.info(f"Loaded {len(df_selected)} rows")
+    
+    # Set up output path
+    output_path = f'refusal_eda/{model_id.replace("/", "_")}_outputs_{timestamp}.csv'
+    
+    # Load existing responses if checkpoint exists
+    existing_responses = load_existing_responses(output_path)
     
     logger.info("=== Before loading ===")
     print_memory_usage()
@@ -55,6 +210,15 @@ def main():
         cache_dir=cache_dir,
         local_files_only=True
     )
+    
+    # Set pad token and padding side for decoder-only models
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+        logger.info(f"Set pad_token to eos_token: {tokenizer.eos_token}")
+    
+    # Set padding side to left for decoder-only models
+    tokenizer.padding_side = 'left'
+    
     logger.info(f"Tokenizer loaded in {time.time() - start_time:.2f}s")
     
     logger.info("=== After tokenizer ===")
@@ -66,7 +230,7 @@ def main():
         model_id,
         cache_dir=cache_dir,
         local_files_only=True,
-        torch_dtype="auto",
+        dtype="auto",
         device_map="auto"
     )
     load_time = time.time() - start_time
@@ -75,43 +239,13 @@ def main():
     logger.info("=== After model loading ===")
     print_memory_usage()
 
-    # Generate responses for each row
-    responses = []
-    logger.info(f"Generating responses for {len(df_selected)} prompts...")
+    # Process in batches
+    processed_count, skipped_count = process_in_batches(
+        df_selected, model, tokenizer, batch_size, 
+        checkpoint_interval, output_path, existing_responses
+    )
     
-    for idx, row in df_selected.iterrows():
-        prompt = row['content']
-        try:
-            inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-            
-            outputs = model.generate(
-                **inputs,
-                max_new_tokens=2048, # max char length is 1498 in our dataset, so 2048 tokens cap is safe
-            )
-
-            generated = outputs[0][inputs["input_ids"].shape[-1]:]
-            
-            # Check if model generated nothing (output length == input length)
-            if len(generated) == 0:
-                text = "[WARNING: Model generated no new tokens]"
-                logger.warning(f"Row {idx}: Model generated no new tokens")
-            else:
-                text = tokenizer.decode(generated, skip_special_tokens=True)
-            
-            responses.append(text)
-        except Exception as e:
-            logger.error(f"Error at row {idx}: {e}")
-            responses.append(f"[ERROR: {str(e)}]")
-        
-        if (idx + 1) % 10 == 0:
-            logger.info(f"Processed {idx + 1}/{len(df_selected)} rows")
-    
-    # Add responses to dataframe
-    df_selected['response'] = responses
-    
-    # Save to CSV with timestamp
-    output_path = f'refusal_eda/{model_id.replace("/", "_")}_outputs_{timestamp}.csv'
-    df_selected.to_csv(output_path, index=False)
+    logger.info(f"Processing complete. Total: {len(df_selected)}, New: {processed_count}, Skipped: {skipped_count}")
     logger.info(f"Results saved to {output_path}")
     
     logger.info("=== After inference ===")
