@@ -1,0 +1,18 @@
+2025-12-10 20:12:40 - INFO - Loading data...
+2025-12-10 20:12:41 - INFO - Loaded 400 rows (100 samples per age_rating_grouped)
+2025-12-10 20:12:41 - INFO - === Before loading ===
+2025-12-10 20:12:41 - INFO - RAM: 16.5GB used / 404.3GB total
+2025-12-10 20:12:41 - INFO - GPU 0: 0.0GB allocated
+2025-12-10 20:12:41 - INFO - GPU 1: 0.0GB allocated
+2025-12-10 20:12:41 - INFO - GPU 2: 0.0GB allocated
+2025-12-10 20:12:41 - INFO - GPU 3: 0.0GB allocated
+2025-12-10 20:12:41 - INFO - Loading tokenizer from local cache …
+2025-12-10 20:12:42 - INFO - Set pad_token to eos_token: <|eot_id|>
+2025-12-10 20:12:42 - INFO - Tokenizer loaded in 0.53s
+2025-12-10 20:12:42 - INFO - === After tokenizer ===
+2025-12-10 20:12:42 - INFO - RAM: 16.8GB used / 404.3GB total
+2025-12-10 20:12:42 - INFO - GPU 0: 0.0GB allocated
+2025-12-10 20:12:42 - INFO - GPU 1: 0.0GB allocated
+2025-12-10 20:12:42 - INFO - GPU 2: 0.0GB allocated
+2025-12-10 20:12:42 - INFO - GPU 3: 0.0GB allocated
+2025-12-10 20:12:42 - INFO - Loading model from local cache …

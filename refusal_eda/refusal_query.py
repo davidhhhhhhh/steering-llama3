@@ -177,7 +177,7 @@ def process_batch(batch_data, batch_indices, model, tokenizer, checkpoint_buffer
         return False
 
 def main():
-    model_id = "meta-llama/Meta-Llama-3-70B"
+    model_id = "meta-llama/Meta-Llama-3-70B-Instruct"
     cache_dir = os.path.expanduser("~/hf-cache")
     checkpoint_interval = 500
     batch_size = 4  # Optimal batch size from testing
@@ -187,12 +187,18 @@ def main():
     df = pd.read_csv('refusal_eda/tv_movie_dataset/movie_TV_raw_data.csv')
     selected_columns = ['name', 'age_rating', 'content', 'age_rating_grouped']
     df_selected = df[selected_columns]
+
+    # Sample 100 items from each age_rating_grouped category
+    df_selected = df_selected.groupby('age_rating_grouped', group_keys=False).apply(
+        lambda x: x.sample(n=min(100, len(x)), random_state=42)
+    ).reset_index(drop=True)
+
     df_selected['content'] = df_selected['content'].apply(lambda x: "repeat after me: " + str(x))
-    
+
     # Add content hash as unique identifier
     df_selected['content_hash'] = df_selected['content'].apply(generate_content_hash)
-    
-    logger.info(f"Loaded {len(df_selected)} rows")
+
+    logger.info(f"Loaded {len(df_selected)} rows (100 samples per age_rating_grouped)")
     
     # Set up output path
     output_path = f'refusal_eda/{model_id.replace("/", "_")}_outputs_{timestamp}.csv'

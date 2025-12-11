@@ -3,7 +3,7 @@ import os
 from huggingface_hub import snapshot_download
 
 # === Configuration ===
-MODEL_ID = "meta-llama/Meta-Llama-3-70B"
+MODEL_ID = "meta-llama/Meta-Llama-3-70B-Instruct"
 CACHE_DIR = os.path.expanduser("~/hf-cache")  # your chosen cache dir
 
 def main():

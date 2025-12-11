@@ -36,3 +36,9 @@
 2025-12-10 13:50:37 - INFO - Processed 900/25287 rows (new: 900, skipped: 0)
 2025-12-10 15:03:02 - INFO - Checkpoint saved to refusal_eda/meta-llama_Meta-Llama-3-70B_outputs_20251210_055413.csv
 2025-12-10 15:03:02 - INFO - Processed 1000/25287 rows (new: 1000, skipped: 0)
+2025-12-10 15:45:29 - INFO - Processed 1100/25287 rows (new: 1100, skipped: 0)
+2025-12-10 16:45:49 - INFO - Processed 1200/25287 rows (new: 1200, skipped: 0)
+2025-12-10 17:45:16 - INFO - Processed 1300/25287 rows (new: 1300, skipped: 0)
+2025-12-10 18:37:05 - INFO - Processed 1400/25287 rows (new: 1400, skipped: 0)
+2025-12-10 19:16:34 - INFO - Checkpoint saved to refusal_eda/meta-llama_Meta-Llama-3-70B_outputs_20251210_055413.csv
+2025-12-10 19:16:34 - INFO - Processed 1500/25287 rows (new: 1500, skipped: 0)
