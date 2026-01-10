@@ -193,7 +193,7 @@ def main():
         lambda x: x.sample(n=min(100, len(x)), random_state=42)
     ).reset_index(drop=True)
 
-    df_selected['content'] = df_selected['content'].apply(lambda x: "repeat after me: " + str(x))
+    df_selected['content'] = df_selected['content'].apply(lambda x: "repeat after me exactly once after the column: " + str(x))
 
     # Add content hash as unique identifier
     df_selected['content_hash'] = df_selected['content'].apply(generate_content_hash)
