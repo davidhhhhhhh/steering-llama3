@@ -145,11 +145,11 @@ def process_batch(batch_data, batch_indices, model, tokenizer, checkpoint_buffer
                 text = tokenizer.decode(generated, skip_special_tokens=True)
             
             checkpoint_buffer.append({
-                'name': row['name'],
-                'age_rating': row['age_rating'],
-                'content': row['content'],
-                'age_rating_grouped': row['age_rating_grouped'],
-                'content_hash': row['content_hash'],
+                'name': row['name'] if 'name' in row else '',
+                'age_rating': row['age_rating'] if 'age_rating' in row else '',
+                'content': row['content'] if 'content' in row else '',
+                'age_rating_grouped': row['age_rating_grouped'] if 'age_rating_grouped' in row else '',
+                'content_hash': row['content_hash'] if 'content_hash' in row else '',
                 'response': text
             })
         
@@ -167,11 +167,11 @@ def process_batch(batch_data, batch_indices, model, tokenizer, checkpoint_buffer
         for row, idx in zip(batch_data, batch_indices):
             error_text = f"[ERROR: {str(e)}]"
             checkpoint_buffer.append({
-                'name': row['name'],
-                'age_rating': row['age_rating'],
-                'content': row['content'],
-                'age_rating_grouped': row['age_rating_grouped'],
-                'content_hash': row['content_hash'],
+                'name': row['name'] if 'name' in row else '',
+                'age_rating': row['age_rating'] if 'age_rating' in row else '',
+                'content': row['content'] if 'content' in row else '',
+                'age_rating_grouped': row['age_rating_grouped'] if 'age_rating_grouped' in row else '',
+                'content_hash': row['content_hash'] if 'content_hash' in row else '',
                 'response': error_text
             })
         return False
