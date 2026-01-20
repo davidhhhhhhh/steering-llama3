@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import torch
 import os
+os.environ['HF_HUB_OFFLINE'] = '1'
+os.environ['TRANSFORMERS_OFFLINE'] = '1'
 import time
 import psutil
 import pandas as pd
