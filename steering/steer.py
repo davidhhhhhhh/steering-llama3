@@ -1,9 +1,13 @@
+#!/usr/bin/env python
 from dataclasses import dataclass
 import numpy as np
 import json
 from tqdm import tqdm
 from argparse import ArgumentParser
 import os
+os.environ['HF_HUB_OFFLINE'] = '1'
+os.environ['TRANSFORMERS_OFFLINE'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 from typing import Optional, Union
 
 import torch
@@ -268,12 +272,13 @@ def steer(
     bias: bool = False,
     ):
     token = os.getenv("HF_TOKEN")
-    tokenizer = AutoTokenizer.from_pretrained(settings.model_id, token=token)
+    tokenizer = AutoTokenizer.from_pretrained(settings.model_id, token=token, local_files_only=True)
     model = AutoModelForCausalLM.from_pretrained(
         settings.model_id,
         torch_dtype=torch.bfloat16,
         device_map="auto",
         token=token,
+        local_files_only=True
     )
 
     layer = settings.layer
@@ -376,7 +381,7 @@ def steer(
 if __name__ == "__main__":
     parser = ArgumentParser()
 
-    parser.add_argument("--mults", type=float, nargs="+", required=True)
+    parser.add_argument("--mults", type=float, nargs="+", default=[0,1,2])
     
     parser.add_argument("--overwrite", action="store_true")
 

@@ -17,7 +17,7 @@ from transformers.models.llama.modeling_llama import (
     LlamaAttention,
     LlamaDecoderLayer,
     apply_rotary_pos_emb,
-    LlamaSdpaAttention,
+#    LlamaSdpaAttention,
     LlamaMLP,
 )
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -29,7 +29,7 @@ from concept_erasure.utils import assert_type, is_norm_layer, mangle_module_path
 from generate_vectors import get_prompts, Settings, tokenize
 
 
-RESIDUAL_CLASSES = (LlamaSdpaAttention, LlamaMLP)
+RESIDUAL_CLASSES = (LlamaAttention, LlamaMLP)
 
 class CAAScrubber:
     """Wrapper for a dictionary mapping module paths to `LeaceEraser` objects and CAA vectors."""
