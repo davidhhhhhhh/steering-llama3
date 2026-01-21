@@ -10,6 +10,7 @@ import logging
 import hashlib
 from datetime import datetime
 from transformers import AutoTokenizer, AutoModelForCausalLM
+import gc
 
 # Generate timestamp for filenames
 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -20,7 +21,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
     handlers=[
-        logging.FileHandler(f'refusal_eda/refusal_query_{timestamp}.log'),
+        logging.FileHandler(f'refusal_eda/logs/refusal_query_{timestamp}.log'),
         logging.StreamHandler()
     ]
 )
@@ -179,88 +180,101 @@ def process_batch(batch_data, batch_indices, model, tokenizer, checkpoint_buffer
         return False
 
 def main():
-    model_id = "meta-llama/Meta-Llama-3-70B-Instruct"
+    model_to_test = [
+        "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
+        "Qwen/Qwen3-30B-A3B-Instruct-2507",
+        "mistralai/Ministral-3-14B-Instruct-2512",
+        "google/gemma-3-27b-pt"
+    ]
+    # model_id = "meta-llama/Meta-Llama-3-70B-Instruct"
     cache_dir = os.path.expanduser("~/hf-cache")
-    checkpoint_interval = 100
+    checkpoint_interval = 50
     batch_size = 4  # Optimal batch size from testing
     
     # Load and prepare data
-    # logger.info("Loading data...")
-    # df = pd.read_csv('refusal_eda/tv_movie_dataset/movie_TV_raw_data.csv')
-    # selected_columns = ['name', 'age_rating', 'content', 'age_rating_grouped']
-    # df_selected = df[selected_columns]
+    logger.info("Loading data...")
+    df = pd.read_csv('refusal_eda/tv_movie_dataset/movie_TV_raw_data.csv')
+    selected_columns = ['name', 'age_rating', 'content', 'age_rating_grouped']
+    df_selected = df[selected_columns]
 
-    # # Sample 100 items from each age_rating_grouped category
-    # df_selected = df_selected.groupby('age_rating_grouped', group_keys=False).apply(
-    #     lambda x: x.sample(n=min(100, len(x)), random_state=42)
-    # ).reset_index(drop=True)
+    # Sample 50 items from each age_rating_grouped category
+    df_selected = df_selected.groupby('age_rating_grouped', group_keys=False).apply(
+        lambda x: x.sample(n=min(50, len(x)), random_state=42)
+    ).reset_index(drop=True)
 
-    # df_selected['content'] = df_selected['content'].apply(lambda x: "repeat after me exactly once after the column: " + str(x))
+    df_selected['content'] = df_selected['content'].apply(lambda x: "repeat after me exactly once after the column: " + str(x))
 
-    # logger.info(f"Loaded {len(df_selected)} rows (100 samples per age_rating_grouped)")
-    df = pd.read_csv("refusal_eda/harmful_behaviors.csv")
-    df.rename(columns={"goal": "content"}, inplace=True)
-    df_selected = df.copy()
+    logger.info(f"Loaded {len(df_selected)} rows (50 samples per age_rating_grouped)")
+
+    # df = pd.read_csv("refusal_eda/harmful_behaviors.csv")
+    # df.rename(columns={"goal": "content"}, inplace=True)
+    # df_selected = df.copy()
     
     # Add content hash as unique identifier
     df_selected['content_hash'] = df_selected['content'].apply(generate_content_hash)
-    
-    # Set up output path
-    output_path = f'refusal_eda/{model_id.replace("/", "_")}_AdvBench_outputs_{timestamp}.csv'
-    
-    # Load existing responses if checkpoint exists
-    existing_responses = load_existing_responses(output_path)
-    
-    logger.info("=== Before loading ===")
-    print_memory_usage()
-    
-    logger.info("Loading tokenizer from local cache …")
-    start_time = time.time()
-    tokenizer = AutoTokenizer.from_pretrained(
-        model_id,
-        cache_dir=cache_dir,
-        local_files_only=True
-    )
-    
-    # Set pad token and padding side for decoder-only models
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-        logger.info(f"Set pad_token to eos_token: {tokenizer.eos_token}")
-    
-    # Set padding side to left for decoder-only models
-    tokenizer.padding_side = 'left'
-    
-    logger.info(f"Tokenizer loaded in {time.time() - start_time:.2f}s")
-    
-    logger.info("=== After tokenizer ===")
-    print_memory_usage()
-    
-    logger.info("Loading model from local cache …")
-    start_time = time.time()
-    model = AutoModelForCausalLM.from_pretrained(
-        model_id,
-        cache_dir=cache_dir,
-        local_files_only=True,
-        dtype="auto",
-        device_map="auto"
-    )
-    load_time = time.time() - start_time
-    logger.info(f"Model loaded in {load_time:.2f}s")
-    
-    logger.info("=== After model loading ===")
-    print_memory_usage()
+    for model_id in model_to_test:
+        # Set up output path
+        output_path = f'refusal_eda/{model_id.replace("/", "_")}_outputs_{timestamp}.csv'
+        
+        # Load existing responses if checkpoint exists
+        existing_responses = load_existing_responses(output_path)
+        
+        logger.info("=== Before loading ===")
+        print_memory_usage()
+        
+        logger.info("Loading tokenizer from local cache …")
+        start_time = time.time()
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_id,
+            cache_dir=cache_dir,
+            local_files_only=True
+        )
+        
+        # Set pad token and padding side for decoder-only models
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+            logger.info(f"Set pad_token to eos_token: {tokenizer.eos_token}")
+        
+        # Set padding side to left for decoder-only models
+        tokenizer.padding_side = 'left'
+        
+        logger.info(f"Tokenizer loaded in {time.time() - start_time:.2f}s")
+        
+        logger.info("=== After tokenizer ===")
+        print_memory_usage()
+        
+        logger.info("Loading model from local cache …")
+        start_time = time.time()
+        model = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            cache_dir=cache_dir,
+            local_files_only=True,
+            dtype="auto",
+            device_map="auto"
+        )
+        load_time = time.time() - start_time
+        logger.info(f"Model loaded in {load_time:.2f}s")
+        
+        logger.info("=== After model loading ===")
+        print_memory_usage()
 
-    # Process in batches
-    processed_count, skipped_count = process_in_batches(
-        df_selected, model, tokenizer, batch_size, 
-        checkpoint_interval, output_path, existing_responses
-    )
-    
-    logger.info(f"Processing complete. Total: {len(df_selected)}, New: {processed_count}, Skipped: {skipped_count}")
-    logger.info(f"Results saved to {output_path}")
-    
-    logger.info("=== After inference ===")
-    print_memory_usage()
+        # Process in batches
+        processed_count, skipped_count = process_in_batches(
+            df_selected, model, tokenizer, batch_size, 
+            checkpoint_interval, output_path, existing_responses
+        )
+        
+        logger.info(f"Processing complete. Total: {len(df_selected)}, New: {processed_count}, Skipped: {skipped_count}")
+        logger.info(f"Results saved to {output_path}")
+        
+        logger.info("=== After inference ===")
+        print_memory_usage()
+
+        # Clean up
+        del model
+        del tokenizer
+        torch.cuda.empty_cache()
+        gc.collect()
 
 if __name__ == "__main__":
     main()

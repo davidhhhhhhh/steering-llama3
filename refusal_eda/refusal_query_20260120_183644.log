@@ -1,7 +1,0 @@
-2026-01-20 18:36:44 - INFO - === Before loading ===
-2026-01-20 18:36:44 - INFO - RAM: 14.1GB used / 404.3GB total
-2026-01-20 18:36:44 - INFO - GPU 0: 0.0GB allocated
-2026-01-20 18:36:44 - INFO - GPU 1: 0.0GB allocated
-2026-01-20 18:36:44 - INFO - GPU 2: 0.0GB allocated
-2026-01-20 18:36:44 - INFO - GPU 3: 0.0GB allocated
-2026-01-20 18:36:44 - INFO - Loading tokenizer from local cache …
