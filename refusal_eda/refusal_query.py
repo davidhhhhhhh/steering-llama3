@@ -181,9 +181,7 @@ def process_batch(batch_data, batch_indices, model, tokenizer, checkpoint_buffer
 
 def main():
     model_to_test = [
-        "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
-        "Qwen/Qwen3-30B-A3B-Instruct-2507",
-        "mistralai/Ministral-3-14B-Instruct-2512",
+        # "mistralai/Ministral-3-14B-Instruct-2512",
         "google/gemma-3-27b-pt"
     ]
     # model_id = "meta-llama/Meta-Llama-3-70B-Instruct"
