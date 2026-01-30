@@ -133,6 +133,10 @@ def process_batch(batch_data, batch_indices, model, tokenizer, checkpoint_buffer
             outputs = model.generate(
                 **inputs,
                 max_new_tokens=2048,
+                do_sample=False,
+                num_beams = 1,
+                temperature=None,
+                top_p=None,
                 pad_token_id=tokenizer.pad_token_id,
             )
         
@@ -181,8 +185,8 @@ def process_batch(batch_data, batch_indices, model, tokenizer, checkpoint_buffer
 
 def main():
     model_to_test = [
-        # "mistralai/Ministral-3-14B-Instruct-2512",
-        "google/gemma-3-27b-pt"
+        "meta-llama/Meta-Llama-3-70B",
+        "meta-llama/Meta-Llama-3-70B-Instruct",
     ]
     # model_id = "meta-llama/Meta-Llama-3-70B-Instruct"
     cache_dir = os.path.expanduser("~/hf-cache")
