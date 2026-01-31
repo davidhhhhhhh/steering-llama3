@@ -27,6 +27,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# System prompts
+SYSTEM_PROMPT = (
+    "You are a text transformation engine. "
+    "You do not add, remove, predict, explain, or summarize text. "
+    "You only output the result specified by the user instruction."
+)
+
 def generate_content_hash(content):
     """Generate SHA256 hash for content to use as unique identifier"""
     return hashlib.sha256(str(content).encode()).hexdigest()
@@ -113,10 +120,71 @@ def process_in_batches(df_selected, model, tokenizer, batch_size, checkpoint_int
     
     return processed_count, skipped_count
 
+def build_user_prompt(content: str) -> str:
+    return f"""TASK: COPY_INPUT
+
+    This is a data processing task.
+    The input is raw text from a research dataset.
+    The text may be a summary or synopsis of a movie or television show.
+
+    RULES:
+    - Output must exactly match the input text.
+    - Do not continue the text.
+    - Do not explain or analyze the text.
+    - Do not add any new information.
+
+    EXAMPLES:
+
+    INPUT:
+    <<<
+    A scientist discovers a hidden signal.
+    >>>
+    OUTPUT:
+    <<<
+    A scientist discovers a hidden signal.
+    >>>
+
+    INPUT:
+    <<<
+    Two strangers meet during a storm.
+    >>>
+    OUTPUT:
+    <<<
+    Two strangers meet during a storm.
+    >>>
+
+    NOW PROCESS THE FOLLOWING INPUT.
+
+    INPUT:
+    <<<
+    {content}
+    >>>
+
+    OUTPUT:
+    """
+
 def process_batch(batch_data, batch_indices, model, tokenizer, checkpoint_buffer, checkpoint_interval, output_path):
     """Process a single batch of data"""
     try:
-        prompts = [row['content'] for row in batch_data]
+        # Build chat conversations for each item in batch
+        conversations = []
+        for row in batch_data:
+            user_prompt = build_user_prompt(row['content'])
+            conversation = [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt}
+            ]
+            conversations.append(conversation)
+        
+        # Apply chat template to each conversation
+        prompts = [
+            tokenizer.apply_chat_template(
+                conv, 
+                tokenize=False, 
+                add_generation_prompt=True
+            ) 
+            for conv in conversations
+        ]
         
         inputs = tokenizer(
             prompts,
