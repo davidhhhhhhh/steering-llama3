@@ -253,8 +253,8 @@ def process_batch(batch_data, batch_indices, model, tokenizer, checkpoint_buffer
 
 def main():
     model_to_test = [
-        "meta-llama/Meta-Llama-3-70B",
         "meta-llama/Meta-Llama-3-70B-Instruct",
+        "meta-llama/Meta-Llama-3-70B",
     ]
     # model_id = "meta-llama/Meta-Llama-3-70B-Instruct"
     cache_dir = os.path.expanduser("~/hf-cache")

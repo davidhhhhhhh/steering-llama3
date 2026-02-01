@@ -1,0 +1,36 @@
+content,input_len_padded,input_len_actual,generated_tokens_padded,generated_tokens_actual,response_padded_with_special,response_padded_no_special,response_actual_with_special,response_actual_no_special
+A scientist discovers a hidden signal.,234,230,15,19,"<<<
+A scientist discovers a hidden signal.
+>>><|eot_id|><|eot_id|><|eot_id|><|eot_id|><|eot_id|>","<<<
+A scientist discovers a hidden signal.
+>>>","<|start_header_id|>assistant<|end_header_id|>
+
+<<<
+A scientist discovers a hidden signal.
+>>><|eot_id|><|eot_id|><|eot_id|><|eot_id|><|eot_id|>","assistant
+
+<<<
+A scientist discovers a hidden signal.
+>>>"
+Two strangers meet during a storm and fall in love.,234,234,15,15,"<<<
+Two strangers meet during a storm and fall in love.
+>>><|eot_id|>","<<<
+Two strangers meet during a storm and fall in love.
+>>>","<<<
+Two strangers meet during a storm and fall in love.
+>>><|eot_id|>","<<<
+Two strangers meet during a storm and fall in love.
+>>>"
+Short text.,234,226,15,23,"<<<
+Short text.
+>>><|eot_id|><|eot_id|><|eot_id|><|eot_id|><|eot_id|><|eot_id|><|eot_id|><|eot_id|><|eot_id|>","<<<
+Short text.
+>>>","    OUTPUT:<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+<<<
+Short text.
+>>><|eot_id|><|eot_id|><|eot_id|><|eot_id|><|eot_id|><|eot_id|><|eot_id|><|eot_id|><|eot_id|>","    OUTPUT:assistant
+
+<<<
+Short text.
+>>>"
